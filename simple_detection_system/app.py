@@ -9,17 +9,31 @@ import cv2
 import numpy as np
 import tensorflow as tf
 from ultralytics import YOLO
-import keras_cv
 from PIL import Image
 import os
 import warnings
 import torch
 import torch.nn as nn
-import timm
-import albumentations as A
-from albumentations.pytorch import ToTensorV2
 import subprocess
 import sys
+
+# Optional imports - try to import but don't fail if missing
+try:
+    import keras_cv
+except ImportError:
+    keras_cv = None
+
+try:
+    import timm
+except ImportError:
+    timm = None
+    
+try:
+    import albumentations as A
+    from albumentations.pytorch import ToTensorV2
+except ImportError:
+    A = None
+    ToTensorV2 = None
 
 # Suppress warnings
 warnings.filterwarnings('ignore')
