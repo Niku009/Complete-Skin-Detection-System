@@ -38,7 +38,39 @@ simple_detection_system/
 
 ---
 
-## 🚀 Quick Start
+## � Download Model Weights (Required!)
+
+**⚠️ Important:** Model weight files are NOT included in the repository due to their large size (1.2GB total).
+
+### **Step 1: Download Weights from Google Drive**
+
+👉 **[Download All Model Weights (1.2GB)](https://drive.google.com/drive/folders/15TlaZmuvhIw2c-j-AxRIp9FDi5manbUt?usp=sharing)**
+
+The folder contains 4 files:
+- `DarkCircideWeights.pt` (450MB)
+- `yolo_acne_detection.weights.h5` (200MB)
+- `skin_redness_model_weights.pth` (250MB)
+- `skin_type_weights.weights.h5` (300MB)
+
+### **Step 2: Place Weights in Correct Folder**
+
+1. Download and extract the ZIP file
+2. Navigate to your project: `simple_detection_system/`
+3. Open the `weights/` folder
+4. Copy all 4 `.pt`, `.h5`, `.pth` files into `weights/`
+
+**Folder structure should look like:**
+```
+simple_detection_system/weights/
+├── DarkCircideWeights.pt
+├── yolo_acne_detection.weights.h5
+├── skin_redness_model_weights.pth
+└── skin_type_weights.weights.h5
+```
+
+---
+
+## �🚀 Quick Start
 
 ### **Windows (Easiest)**
 ```bash
@@ -104,30 +136,6 @@ See `requirements-deploy.txt` for complete list.
 
 ---
 
-## 🌐 Deployment
-
-### **Streamlit Cloud** (Recommended - Free)
-1. Push to GitHub
-2. Go to https://streamlit.io/cloud
-3. Create new app → Select repository & `app.py`
-4. Deploy!
-
-### **Docker**
-```dockerfile
-FROM python:3.12-slim
-WORKDIR /app
-COPY . .
-RUN pip install -r requirements-deploy.txt
-CMD ["streamlit", "run", "app.py"]
-```
-
-### **Other Platforms**
-- Hugging Face Spaces
-- AWS / Google Cloud
-- Heroku
-- Any server with Python 3.12
-
----
 
 ## 📝 Usage Example
 
