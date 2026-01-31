@@ -1,0 +1,36 @@
+# Ignore virtual environments
+.venv/
+.venv_312/
+venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# ML model weights (too large for GitHub)
+weights/DarkCircideWeights.pt
+weights/yolo_acne_detection.weights.h5
+weights/skin_redness_model_weights.pth
+weights/skin_type_weights.weights.h5
+
+# Streamlit cache
+.streamlit/
+.streamlit/secrets.toml
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Results/temp folders
+results/
+temp/
+*.log
