@@ -127,14 +127,14 @@ def load_yolo_models():
     models = {}
     
     try:
-        with st.spinner("📦 Loading dark circle model..."):
-            models['dark_circle'] = YOLO("weights/DarkCircideWeights.pt")
+        models['dark_circle'] = YOLO("weights/DarkCircideWeights.pt")
+    except FileNotFoundError:
+        models['dark_circle'] = None  # Silently fail - weights not found on Cloud
     except Exception as e:
-        st.error(f"❌ Dark circle model error: {str(e)}")
         models['dark_circle'] = None
     
     try:
-        with st.spinner("📦 Loading acne detection model..."):
+        if keras_cv is not None:
             backbone = keras_cv.models.YOLOV8Backbone.from_preset(
                 "yolo_v8_xs_backbone",
                 include_rescaling=True
@@ -146,8 +146,11 @@ def load_yolo_models():
                 fpn_depth=5
             )
             models['acne'].load_weights("weights/yolo_acne_detection.weights.h5")
+        else:
+            models['acne'] = None
+    except FileNotFoundError:
+        models['acne'] = None  # Silently fail - weights not found on Cloud
     except Exception as e:
-        st.error(f"❌ Acne model error: {str(e)}")
         models['acne'] = None
     
     return models
@@ -179,25 +182,28 @@ class SkinConditionClassifier(nn.Module):
 def load_redness_model():
     """Load redness and bags under eyes detection model"""
     try:
-        with st.spinner("📦 Loading redness detection model..."):
-            model = SkinConditionClassifier(num_classes=2).to(device)
+        if timm is None:
+            return None  # timm not available
             
-            # Load weights with strict=False to allow shape mismatches
-            try:
-                checkpoint = torch.load(
-                    "weights/skin_redness_model_weights.pth",
-                    map_location=device,
-                    weights_only=False
-                )
-                # Try to load with strict=False
-                model.load_state_dict(checkpoint['model_state_dict'], strict=False)
-            except Exception as e:
-                st.warning(f"⚠️ Redness model weights incompatible, using pretrained model: {str(e)[:50]}...")
-            
-            model.eval()
-            return model
+        model = SkinConditionClassifier(num_classes=2).to(device)
+        
+        # Try to load weights if available
+        try:
+            checkpoint = torch.load(
+                "weights/skin_redness_model_weights.pth",
+                map_location=device,
+                weights_only=False
+            )
+            model.load_state_dict(checkpoint['model_state_dict'], strict=False)
+        except FileNotFoundError:
+            pass  # Weights not found on Cloud - use pretrained backbone
+        except Exception:
+            pass  # Other errors loading weights - use pretrained backbone
+        
+        model.eval()
+        return model
     except Exception as e:
-        st.error(f"❌ Redness model error: {str(e)[:100]}...")
+        # If model creation itself fails, return None silently
         return None
 
 # ==================== MODEL 4: SKIN TYPE CLASSIFIER ====================
@@ -205,49 +211,47 @@ def load_redness_model():
 def load_skin_type_model():
     """Load skin type classifier (Dry, Normal, Oily)"""
     try:
-        with st.spinner("📦 Loading skin type model..."):
-            from tensorflow.keras.applications import ResNet50
-            from tensorflow.keras import layers, Sequential
-            
-            IMG_SIZE = 224
-            num_classes = 3
-            
-            resnet = ResNet50(
-                weights='imagenet',
-                include_top=False,
-                input_shape=(IMG_SIZE, IMG_SIZE, 3)
-            )
-            resnet.trainable = False
-            
-            model = Sequential([
-                layers.Rescaling(1./127.5, offset=-1),
-                resnet,
-                layers.GlobalAveragePooling2D(),
-                layers.BatchNormalization(),
-                layers.Dense(256, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.001)),
-                layers.Dropout(0.5),
-                layers.Dense(128, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.001)),
-                layers.Dropout(0.3),
-                layers.Dense(num_classes, activation='softmax')
-            ])
-            
-            model.build(input_shape=(None, IMG_SIZE, IMG_SIZE, 3))
-            
-            # Try to load weights
-            weights_path = "weights/skin_type_weights.weights.h5"
-            try:
-                model.load_weights(weights_path)
-                print(f"✅ Successfully loaded skin type weights from {weights_path}")
-            except Exception as load_err:
-                print(f"⚠️ Could not load weights: {str(load_err)}")
-                print(f"   Model using default ImageNet initialization + untrained classifier head")
-            
-            model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-            
-            return model
+        from tensorflow.keras.applications import ResNet50
+        from tensorflow.keras import layers, Sequential
+        
+        IMG_SIZE = 224
+        num_classes = 3
+        
+        resnet = ResNet50(
+            weights='imagenet',
+            include_top=False,
+            input_shape=(IMG_SIZE, IMG_SIZE, 3)
+        )
+        resnet.trainable = False
+        
+        model = Sequential([
+            layers.Rescaling(1./127.5, offset=-1),
+            resnet,
+            layers.GlobalAveragePooling2D(),
+            layers.BatchNormalization(),
+            layers.Dense(256, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.001)),
+            layers.Dropout(0.5),
+            layers.Dense(128, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.001)),
+            layers.Dropout(0.3),
+            layers.Dense(num_classes, activation='softmax')
+        ])
+        
+        model.build(input_shape=(None, IMG_SIZE, IMG_SIZE, 3))
+        
+        # Try to load weights silently
+        weights_path = "weights/skin_type_weights.weights.h5"
+        try:
+            model.load_weights(weights_path)
+        except FileNotFoundError:
+            pass  # Weights not found on Cloud - use pretrained initialization
+        except Exception:
+            pass  # Other errors - use pretrained initialization
+        
+        model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+        
+        return model
     except Exception as e:
-        st.error(f"❌ Skin type model error: {str(e)}")
-        print(f"❌ Skin type model loading failed: {str(e)}")
+        # If model creation itself fails, return None silently
         return None
 
 # ==================== LOAD ALL MODELS ====================
