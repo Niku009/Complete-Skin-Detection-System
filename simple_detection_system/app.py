@@ -41,26 +41,26 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 # ==================== MODEL WEIGHTS AUTO-DOWNLOAD ====================
 def ensure_model_weights():
-    """Download model weights from Google Drive if they don't exist
+    """Check for model weight files - show warning if missing
     
-    This function checks for required model weight files and downloads them
-    from Google Drive if missing. Useful for Streamlit Cloud deployment.
+    On Streamlit Cloud, weights need to be downloaded manually.
+    On local setup, they can be auto-downloaded.
     """
     
     weights_dir = "simple_detection_system/weights"
     os.makedirs(weights_dir, exist_ok=True)
     
     # Required model files
-    required_models = {
-        "DarkCircideWeights.pt": "Dark Circles Detection",
-        "yolo_acne_detection.weights.h5": "Acne Detection",
-        "skin_redness_model_weights.pth": "Skin Redness Analysis",
-        "skin_type_weights.weights.h5": "Skin Type Classification"
-    }
+    required_models = [
+        "DarkCircideWeights.pt",
+        "yolo_acne_detection.weights.h5",
+        "skin_redness_model_weights.pth",
+        "skin_type_weights.weights.h5"
+    ]
     
     # Check which files are missing
     missing_files = []
-    for filename in required_models.keys():
+    for filename in required_models:
         filepath = os.path.join(weights_dir, filename)
         if not os.path.exists(filepath):
             missing_files.append(filename)
@@ -68,48 +68,19 @@ def ensure_model_weights():
     if not missing_files:
         return  # All files exist, ready to go!
     
-    # Files are missing, try to download them
-    st.warning(f"⏳ Downloading {len(missing_files)} model weights (first run, one-time only)...")
+    # Files are missing
+    st.warning(f"⏳ {len(missing_files)} model weights not found...")
+    st.info("""
+    📥 **To use all detection features, download model weights:**
     
-    try:
-        # Install gdown if needed
-        try:
-            import gdown
-        except ImportError:
-            st.info("📦 Installing download helper...")
-            subprocess.check_call([sys.executable, "-m", "pip", "install", "gdown", "-q"])
-            import gdown
-        
-        # Download from Google Drive folder
-        folder_url = "https://drive.google.com/drive/folders/15TlaZmuvhIw2c-j-AxRIp9FDi5manbUt?usp=sharing"
-        
-        with st.spinner("📥 Downloading model weights from Google Drive..."):
-            try:
-                # Download all files from the folder
-                gdown.download_folder(folder_url, output=weights_dir, quiet=False, use_cookies=False)
-                st.success("✅ All model weights downloaded successfully!")
-                st.balloons()
-            except Exception as e:
-                st.error(f"Auto-download failed: {str(e)}")
-                raise
+    **For Local Use:**
+    1. Visit: https://drive.google.com/drive/folders/15TlaZmuvhIw2c-j-AxRIp9FDi5manbUt
+    2. Download all 4 model files
+    3. Place in: `simple_detection_system/weights/`
+    4. Run locally: `streamlit run app.py`
     
-    except Exception as e:
-        st.error("❌ Could not download model weights automatically")
-        st.info("""
-        📥 **Manual Download Required:**
-        
-        1. Visit: https://drive.google.com/drive/folders/15TlaZmuvhIw2c-j-AxRIp9FDi5manbUt
-        2. Download all 4 model files
-        3. Place them in: `simple_detection_system/weights/`
-        4. Refresh this page
-        
-        **Required files:**
-        - DarkCircideWeights.pt
-        - yolo_acne_detection.weights.h5
-        - skin_redness_model_weights.pth
-        - skin_type_weights.weights.h5
-        """)
-        st.stop()
+    **Current Status:** Running without weights (demo mode)
+    """)
 
 # ==================== PAGE CONFIG ====================
 st.set_page_config(
