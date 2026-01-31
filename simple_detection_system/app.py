@@ -18,10 +18,84 @@ import torch.nn as nn
 import timm
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
+import subprocess
+import sys
 
 # Suppress warnings
 warnings.filterwarnings('ignore')
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
+# ==================== MODEL WEIGHTS AUTO-DOWNLOAD ====================
+def ensure_model_weights():
+    """Download model weights from Google Drive if they don't exist
+    
+    This function checks for required model weight files and downloads them
+    from Google Drive if missing. Useful for Streamlit Cloud deployment.
+    """
+    
+    weights_dir = "simple_detection_system/weights"
+    os.makedirs(weights_dir, exist_ok=True)
+    
+    # Required model files
+    required_models = {
+        "DarkCircideWeights.pt": "Dark Circles Detection",
+        "yolo_acne_detection.weights.h5": "Acne Detection",
+        "skin_redness_model_weights.pth": "Skin Redness Analysis",
+        "skin_type_weights.weights.h5": "Skin Type Classification"
+    }
+    
+    # Check which files are missing
+    missing_files = []
+    for filename in required_models.keys():
+        filepath = os.path.join(weights_dir, filename)
+        if not os.path.exists(filepath):
+            missing_files.append(filename)
+    
+    if not missing_files:
+        return  # All files exist, ready to go!
+    
+    # Files are missing, try to download them
+    st.warning(f"⏳ Downloading {len(missing_files)} model weights (first run, one-time only)...")
+    
+    try:
+        # Install gdown if needed
+        try:
+            import gdown
+        except ImportError:
+            st.info("📦 Installing download helper...")
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "gdown", "-q"])
+            import gdown
+        
+        # Download from Google Drive folder
+        folder_url = "https://drive.google.com/drive/folders/15TlaZmuvhIw2c-j-AxRIp9FDi5manbUt?usp=sharing"
+        
+        with st.spinner("📥 Downloading model weights from Google Drive..."):
+            try:
+                # Download all files from the folder
+                gdown.download_folder(folder_url, output=weights_dir, quiet=False, use_cookies=False)
+                st.success("✅ All model weights downloaded successfully!")
+                st.balloons()
+            except Exception as e:
+                st.error(f"Auto-download failed: {str(e)}")
+                raise
+    
+    except Exception as e:
+        st.error("❌ Could not download model weights automatically")
+        st.info("""
+        📥 **Manual Download Required:**
+        
+        1. Visit: https://drive.google.com/drive/folders/15TlaZmuvhIw2c-j-AxRIp9FDi5manbUt
+        2. Download all 4 model files
+        3. Place them in: `simple_detection_system/weights/`
+        4. Refresh this page
+        
+        **Required files:**
+        - DarkCircideWeights.pt
+        - yolo_acne_detection.weights.h5
+        - skin_redness_model_weights.pth
+        - skin_type_weights.weights.h5
+        """)
+        st.stop()
 
 # ==================== PAGE CONFIG ====================
 st.set_page_config(
@@ -30,6 +104,12 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
+
+# Run auto-download at startup
+try:
+    ensure_model_weights()
+except Exception as e:
+    st.error("⚠️ Could not download model weights automatically. Please download manually from: https://drive.google.com/drive/folders/15TlaZmuvhIw2c-j-AxRIp9FDi5manbUt")
 
 # Custom styling
 st.markdown("""
