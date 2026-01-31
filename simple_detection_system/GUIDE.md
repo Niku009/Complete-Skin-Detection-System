@@ -76,7 +76,7 @@ simple_detection_system/
 │   ├── Real-time detection pipeline
 │   └── Results download feature
 │
-├── 📦 weights/                        # Model weights directory (1.2GB)
+├── 📦 weights/                        # Model weights directory (350MB)
 │   ├── DarkCircideWeights.pt          # YOLO - Dark circle detection
 │   ├── yolo_acne_detection.weights.h5 # Keras-CV YOLO - Acne detection
 │   ├── skin_redness_model_weights.pth # PyTorch - Redness scoring
@@ -199,7 +199,7 @@ The app displays:
 
 ---
 
-## 🌐 Deployment Options
+## 🌐 Deployment Options(If you want to deploy it for Clg purpose (iykyk))
 
 ### **1. Streamlit Cloud (Free & Easy)**
 
@@ -563,5 +563,4 @@ For issues:
 
 ---
 
-**Last Updated:** January 2026
-**Version:** 1.0 Production Ready
+

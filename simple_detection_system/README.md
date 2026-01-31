@@ -40,24 +40,20 @@ simple_detection_system/
 
 ## � Download Model Weights (Required!)
 
-**⚠️ Important:** Model weight files are NOT included in the repository due to their large size (1.2GB total).
+**⚠️ Important:** Model weight files are NOT included in the repository due to their large size (350MB total).
 
 ### **Step 1: Download Weights from Google Drive**
 
-👉 **[Download All Model Weights (1.2GB)](https://drive.google.com/drive/folders/15TlaZmuvhIw2c-j-AxRIp9FDi5manbUt?usp=sharing)**
+👉 **[Download All Model Weights (350MB)](https://drive.google.com/drive/folders/15TlaZmuvhIw2c-j-AxRIp9FDi5manbUt?usp=sharing)**
 
-The folder contains 4 files:
-- `DarkCircideWeights.pt` (450MB)
-- `yolo_acne_detection.weights.h5` (200MB)
-- `skin_redness_model_weights.pth` (250MB)
-- `skin_type_weights.weights.h5` (300MB)
+The folder contains 4 files (total ~350MB)
 
 ### **Step 2: Place Weights in Correct Folder**
 
-1. Download and extract the ZIP file
+1. Download all files from the Google Drive folder
 2. Navigate to your project: `simple_detection_system/`
 3. Open the `weights/` folder
-4. Copy all 4 `.pt`, `.h5`, `.pth` files into `weights/`
+4. Copy all 4 model files (`.pt`, `.h5`, `.pth`) into `weights/`
 
 **Folder structure should look like:**
 ```
