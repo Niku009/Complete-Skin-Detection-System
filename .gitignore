@@ -15,8 +15,7 @@ weights/yolo_acne_detection.weights.h5
 weights/skin_redness_model_weights.pth
 weights/skin_type_weights.weights.h5
 
-# Streamlit cache
-.streamlit/
+# Streamlit secrets (but keep config)
 .streamlit/secrets.toml
 
 # IDEs
