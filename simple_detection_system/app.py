@@ -127,7 +127,7 @@ def load_yolo_models():
     models = {}
     
     try:
-        models['dark_circle'] = YOLO("weights/DarkCircideWeights.pt")
+        models['dark_circle'] = YOLO("simple_detection_system/weights/DarkCircideWeights.pt")
     except FileNotFoundError:
         models['dark_circle'] = None  # Silently fail - weights not found on Cloud
     except Exception as e:
@@ -145,7 +145,7 @@ def load_yolo_models():
                 backbone=backbone,
                 fpn_depth=5
             )
-            models['acne'].load_weights("weights/yolo_acne_detection.weights.h5")
+            models['acne'].load_weights("simple_detection_system/weights/yolo_acne_detection.weights.h5")
         else:
             models['acne'] = None
     except FileNotFoundError:
@@ -190,7 +190,7 @@ def load_redness_model():
         # Try to load weights if available
         try:
             checkpoint = torch.load(
-                "weights/skin_redness_model_weights.pth",
+                "simple_detection_system/weights/skin_redness_model_weights.pth",
                 map_location=device,
                 weights_only=False
             )
@@ -239,7 +239,7 @@ def load_skin_type_model():
         model.build(input_shape=(None, IMG_SIZE, IMG_SIZE, 3))
         
         # Try to load weights silently
-        weights_path = "weights/skin_type_weights.weights.h5"
+        weights_path = "simple_detection_system/weights/skin_type_weights.weights.h5"
         try:
             model.load_weights(weights_path)
         except FileNotFoundError:
