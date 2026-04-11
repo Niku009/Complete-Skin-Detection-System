@@ -42,6 +42,20 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 # Resolve project paths relative to this file so launch directory does not matter
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 WEIGHTS_DIR = os.path.join(APP_DIR, "weights")
+WEIGHT_FILES = {
+    'dark_circle': "DarkCircideWeights.pt",
+    'acne': "yolo_acne_detection.weights.h5",
+    'redness': "skin_redness_model_weights.pth",
+    'skin_type': "skin_type_weights.weights.h5"
+}
+
+
+def weight_path(model_key):
+    return os.path.join(WEIGHTS_DIR, WEIGHT_FILES[model_key])
+
+
+def has_weight(model_key):
+    return os.path.exists(weight_path(model_key))
 
 # ==================== MODEL WEIGHTS AUTO-DOWNLOAD ====================
 def ensure_model_weights():
@@ -54,12 +68,7 @@ def ensure_model_weights():
     os.makedirs(WEIGHTS_DIR, exist_ok=True)
     
     # Required model files
-    required_models = [
-        "DarkCircideWeights.pt",
-        "yolo_acne_detection.weights.h5",
-        "skin_redness_model_weights.pth",
-        "skin_type_weights.weights.h5"
-    ]
+    required_models = list(WEIGHT_FILES.values())
     
     # Check which files are missing
     missing_files = []
@@ -130,14 +139,17 @@ def load_yolo_models():
     models = {}
     
     try:
-        models['dark_circle'] = YOLO(os.path.join(WEIGHTS_DIR, "DarkCircideWeights.pt"))
+        if has_weight('dark_circle'):
+            models['dark_circle'] = YOLO(weight_path('dark_circle'))
+        else:
+            models['dark_circle'] = None
     except FileNotFoundError:
         models['dark_circle'] = None  # Silently fail - weights not found on Cloud
     except Exception as e:
         models['dark_circle'] = None
     
     try:
-        if keras_cv is not None:
+        if keras_cv is not None and has_weight('acne'):
             backbone = keras_cv.models.YOLOV8Backbone.from_preset(
                 "yolo_v8_xs_backbone",
                 include_rescaling=True
@@ -148,7 +160,7 @@ def load_yolo_models():
                 backbone=backbone,
                 fpn_depth=5
             )
-            models['acne'].load_weights(os.path.join(WEIGHTS_DIR, "yolo_acne_detection.weights.h5"))
+            models['acne'].load_weights(weight_path('acne'))
         else:
             models['acne'] = None
     except FileNotFoundError:
@@ -161,10 +173,9 @@ def load_yolo_models():
 # ==================== MODEL 3: REDNESS DETECTOR ====================
 class SkinConditionClassifier(nn.Module):
     """EfficientNet-based skin condition classifier"""
-    def __init__(self, num_classes=2):
+    def __init__(self, num_classes=2, pretrained=False):
         super(SkinConditionClassifier, self).__init__()
-        # Load pretrained EfficientNet-B0 from timm
-        self.backbone = timm.create_model('efficientnet_b0', pretrained=True)
+        self.backbone = timm.create_model('efficientnet_b0', pretrained=pretrained)
         
         # Get number of features from the model
         in_features = self.backbone.classifier.in_features
@@ -185,23 +196,17 @@ class SkinConditionClassifier(nn.Module):
 def load_redness_model():
     """Load redness and bags under eyes detection model"""
     try:
-        if timm is None:
-            return None  # timm not available
-            
-        model = SkinConditionClassifier(num_classes=2).to(device)
-        
-        # Try to load weights if available
-        try:
-            checkpoint = torch.load(
-                os.path.join(WEIGHTS_DIR, "skin_redness_model_weights.pth"),
-                map_location=device,
-                weights_only=False
-            )
-            model.load_state_dict(checkpoint['model_state_dict'], strict=False)
-        except FileNotFoundError:
-            pass  # Weights not found on Cloud - use pretrained backbone
-        except Exception:
-            pass  # Other errors loading weights - use pretrained backbone
+        if timm is None or not has_weight('redness'):
+            return None
+
+        model = SkinConditionClassifier(num_classes=2, pretrained=False).to(device)
+
+        checkpoint = torch.load(
+            weight_path('redness'),
+            map_location=device,
+            weights_only=False
+        )
+        model.load_state_dict(checkpoint['model_state_dict'], strict=False)
         
         model.eval()
         return model
@@ -214,6 +219,9 @@ def load_redness_model():
 def load_skin_type_model():
     """Load skin type classifier (Dry, Normal, Oily)"""
     try:
+        if not has_weight('skin_type'):
+            return None
+
         from tensorflow.keras.applications import ResNet50
         from tensorflow.keras import layers, Sequential
         
@@ -221,7 +229,7 @@ def load_skin_type_model():
         num_classes = 3
         
         resnet = ResNet50(
-            weights='imagenet',
+            weights=None,
             include_top=False,
             input_shape=(IMG_SIZE, IMG_SIZE, 3)
         )
@@ -242,13 +250,7 @@ def load_skin_type_model():
         model.build(input_shape=(None, IMG_SIZE, IMG_SIZE, 3))
         
         # Try to load weights silently
-        weights_path = os.path.join(WEIGHTS_DIR, "skin_type_weights.weights.h5")
-        try:
-            model.load_weights(weights_path)
-        except FileNotFoundError:
-            pass  # Weights not found on Cloud - use pretrained initialization
-        except Exception:
-            pass  # Other errors - use pretrained initialization
+        model.load_weights(weight_path('skin_type'))
         
         model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
         
@@ -258,9 +260,9 @@ def load_skin_type_model():
         return None
 
 # ==================== LOAD ALL MODELS ====================
-yolo_models = load_yolo_models()
-redness_model = load_redness_model()
-skin_type_model = load_skin_type_model()
+yolo_models = {'dark_circle': None, 'acne': None}
+redness_model = None
+skin_type_model = None
 
 # ==================== PREPROCESSING ====================
 redness_transform = None
@@ -287,6 +289,11 @@ with st.expander("⚙️ Advanced Settings"):
 
 # ==================== MAIN DETECTION ====================
 if uploaded_file is not None:
+    # Load models only when needed to keep cloud startup stable
+    yolo_models = load_yolo_models()
+    redness_model = load_redness_model()
+    skin_type_model = load_skin_type_model()
+
     # Save uploaded file temporarily
     temp_path = f"temp_{uploaded_file.name}"
     with open(temp_path, "wb") as f:
