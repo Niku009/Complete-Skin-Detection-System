@@ -39,6 +39,10 @@ except ImportError:
 warnings.filterwarnings('ignore')
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
+# Resolve project paths relative to this file so launch directory does not matter
+APP_DIR = os.path.dirname(os.path.abspath(__file__))
+WEIGHTS_DIR = os.path.join(APP_DIR, "weights")
+
 # ==================== MODEL WEIGHTS AUTO-DOWNLOAD ====================
 def ensure_model_weights():
     """Check for model weight files - show warning if missing
@@ -47,8 +51,7 @@ def ensure_model_weights():
     On local setup, they can be auto-downloaded.
     """
     
-    weights_dir = "simple_detection_system/weights"
-    os.makedirs(weights_dir, exist_ok=True)
+    os.makedirs(WEIGHTS_DIR, exist_ok=True)
     
     # Required model files
     required_models = [
@@ -61,7 +64,7 @@ def ensure_model_weights():
     # Check which files are missing
     missing_files = []
     for filename in required_models:
-        filepath = os.path.join(weights_dir, filename)
+        filepath = os.path.join(WEIGHTS_DIR, filename)
         if not os.path.exists(filepath):
             missing_files.append(filename)
     
@@ -127,7 +130,7 @@ def load_yolo_models():
     models = {}
     
     try:
-        models['dark_circle'] = YOLO("simple_detection_system/weights/DarkCircideWeights.pt")
+        models['dark_circle'] = YOLO(os.path.join(WEIGHTS_DIR, "DarkCircideWeights.pt"))
     except FileNotFoundError:
         models['dark_circle'] = None  # Silently fail - weights not found on Cloud
     except Exception as e:
@@ -145,7 +148,7 @@ def load_yolo_models():
                 backbone=backbone,
                 fpn_depth=5
             )
-            models['acne'].load_weights("simple_detection_system/weights/yolo_acne_detection.weights.h5")
+            models['acne'].load_weights(os.path.join(WEIGHTS_DIR, "yolo_acne_detection.weights.h5"))
         else:
             models['acne'] = None
     except FileNotFoundError:
@@ -190,7 +193,7 @@ def load_redness_model():
         # Try to load weights if available
         try:
             checkpoint = torch.load(
-                "simple_detection_system/weights/skin_redness_model_weights.pth",
+                os.path.join(WEIGHTS_DIR, "skin_redness_model_weights.pth"),
                 map_location=device,
                 weights_only=False
             )
@@ -239,7 +242,7 @@ def load_skin_type_model():
         model.build(input_shape=(None, IMG_SIZE, IMG_SIZE, 3))
         
         # Try to load weights silently
-        weights_path = "simple_detection_system/weights/skin_type_weights.weights.h5"
+        weights_path = os.path.join(WEIGHTS_DIR, "skin_type_weights.weights.h5")
         try:
             model.load_weights(weights_path)
         except FileNotFoundError:
@@ -260,11 +263,13 @@ redness_model = load_redness_model()
 skin_type_model = load_skin_type_model()
 
 # ==================== PREPROCESSING ====================
-redness_transform = A.Compose([
-    A.Resize(224, 224),
-    A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ToTensorV2()
-])
+redness_transform = None
+if A is not None and ToTensorV2 is not None:
+    redness_transform = A.Compose([
+        A.Resize(224, 224),
+        A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ToTensorV2()
+    ])
 
 # ==================== FILE UPLOAD ====================
 col1, col2, col3 = st.columns([1, 2, 1])
@@ -370,7 +375,7 @@ if uploaded_file is not None:
                 st.error(f"Acne error: {str(e)}")
         
         # ===== DETECTION 3: REDNESS & BAGS =====
-        if redness_model:
+        if redness_model and redness_transform is not None:
             try:
                 redness_model.eval()
                 augmented = redness_transform(image=img_rgb)

@@ -1,6 +1,5 @@
 [client]
 showErrorDetails = true
-maxMessageSize = 200
 
 [logger]
 level = "error"
