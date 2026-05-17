@@ -1,1 +1,36 @@
--r simple_detection_system/requirements-deploy.txt
+# Skinwise production dependencies.
+#
+# Target: Streamlit Cloud, Python 3.11 (see runtime.txt). This pin set
+# matches the framework versions the model weights were trained against,
+# so the custom topological weight loader in src/weight_loader.py runs
+# happily on top of native Keras 2.
+#
+# On newer Python (3.12+) where TF 2.15 has no wheels, install the
+# alternate stack in requirements-dev.txt instead. The src/tf_compat.py
+# shim makes the same source code work on both.
+
+# --- Core UI ---
+streamlit==1.36.0
+
+# --- Imaging ---
+pillow==10.3.0
+opencv-python-headless==4.9.0.80
+numpy==1.26.4
+h5py==3.10.0
+
+# --- Object detection (PyTorch / Ultralytics) ---
+ultralytics==8.3.27
+torch==2.2.2
+torchvision==0.17.2
+
+# --- Classifier stack (PyTorch + timm) ---
+timm==1.0.7
+albumentations==1.4.10
+
+# --- TensorFlow + Keras-CV (acne) + ResNet50 (skin type) ---
+tensorflow==2.15.1
+keras==2.15.0
+keras-cv==0.9.0
+
+# --- Auto-download of model weights on first launch ---
+gdown==5.2.0

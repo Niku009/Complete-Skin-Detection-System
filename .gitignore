@@ -1,35 +1,45 @@
-# Ignore virtual environments
+# Virtual envs
 .venv/
-.venv_312/
 venv/
+env/
+.venv_311/
+.venv_312/
 
 # Python cache
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
+*.egg-info/
+build/
+dist/
 
-# ML model weights (too large for GitHub)
-weights/DarkCircideWeights.pt
-weights/yolo_acne_detection.weights.h5
-weights/skin_redness_model_weights.pth
-weights/skin_type_weights.weights.h5
+# ML model weights (too large for Git; download via gdown on first run)
+weights/*.pt
+weights/*.pth
+weights/*.h5
+!weights/.gitkeep
 
-# Streamlit secrets (but keep config)
+# Streamlit secrets (keep config.toml)
 .streamlit/secrets.toml
 
-# IDEs
+# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Results/temp folders
-results/
+# Temp / logs
 temp/
+results/
 *.log
+*.err
+.cache/
+
+# Local dev artifacts
+streamlit.log
+streamlit.err

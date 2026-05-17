@@ -1,0 +1,3 @@
+# Keep this directory under version control.
+# Real .pt / .pth / .h5 weights are ignored by .gitignore and downloaded
+# automatically on first launch via gdown — see src/utils.py.
