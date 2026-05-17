@@ -1,13 +1,10 @@
 # Skinwise production dependencies.
+# Target: Streamlit Cloud, Python 3.11 (see runtime.txt).
 #
-# Target: Streamlit Cloud, Python 3.11 (see runtime.txt). This pin set
-# matches the framework versions the model weights were trained against,
-# so the custom topological weight loader in src/weight_loader.py runs
-# happily on top of native Keras 2.
-#
-# On newer Python (3.12+) where TF 2.15 has no wheels, install the
-# alternate stack in requirements-dev.txt instead. The src/tf_compat.py
-# shim makes the same source code work on both.
+# Key design decision: we install tf-keras (the standalone Keras-2 backport)
+# alongside tensorflow==2.15.1. This means src/tf_compat.py ALWAYS resolves
+# to tf_keras on both Python 3.11 (Cloud) and Python 3.12+ (local), keeping
+# behavior identical and immune to Keras-3 being present in the environment.
 
 # --- Core UI ---
 streamlit==1.36.0
@@ -27,9 +24,9 @@ torchvision==0.17.2
 timm==1.0.7
 albumentations==1.4.10
 
-# --- TensorFlow + Keras-CV (acne) + ResNet50 (skin type) ---
+# --- TensorFlow + Keras-2 backport + Keras-CV (acne) + skin type ---
 tensorflow==2.15.1
-keras==2.15.0
+tf-keras==2.15.0
 keras-cv==0.9.0
 
 # --- Auto-download of model weights on first launch ---

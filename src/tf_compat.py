@@ -1,29 +1,28 @@
-"""Keras 2 compatibility shim.
+"""Keras-2 compatibility shim.
 
-Streamlit Cloud (Python 3.11 + TensorFlow 2.15) ships Keras 2 natively as
-``tensorflow.keras`` and does **not** publish a ``tf-keras`` wheel for that
-TF version. Local development on newer Python (3.12+) typically gets
-TensorFlow 2.16+, where ``tensorflow.keras`` is Keras 3 and the Keras 2
-implementation lives in the ``tf-keras`` package.
+We install ``tf-keras`` (the standalone Keras-2 backport) in BOTH
+environments so ``import tf_keras`` always succeeds. This bypasses Keras-3
+if it happens to exist in the environment.
 
-This module hides that difference: import ``Sequential``, ``layers``,
-``regularizers`` and ``applications`` from here and the rest of the codebase
-stays portable across both environments.
+  Python 3.11 + TF 2.15 (Streamlit Cloud) -> tf-keras==2.15.0
+  Python 3.12+ local (TF 2.16+)           -> tf-keras==2.16.0
+
+The env vars MUST be set before any tensorflow/keras import. We set them
+here at module level; app.py also sets them at the very top as an extra
+safety net for cases where streamlit imports this module via a cached path.
 """
 from __future__ import annotations
 
 import os
 
-# keras-cv reads `import keras` internally. On TF 2.16+ that resolves to
-# Keras 3 unless we flip this switch before TF is imported.
-os.environ.setdefault("TF_USE_LEGACY_KERAS", "1")
+# Must precede every TF / keras-cv import.
+os.environ["TF_USE_LEGACY_KERAS"] = "1"
+os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
+os.environ.setdefault("KERAS_BACKEND", "tensorflow")
 
-try:
-    import tf_keras as _keras            # backport on TF 2.16+
-    SOURCE = "tf_keras"
-except ImportError:                       # pragma: no cover
-    import tensorflow.keras as _keras    # native Keras 2 on TF 2.15
-    SOURCE = "tensorflow.keras"
+import tf_keras as _keras  # noqa: E402  (tf_keras in both requirements files)
+
+SOURCE = "tf_keras"
 
 Sequential   = _keras.Sequential
 layers       = _keras.layers
