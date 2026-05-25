@@ -11,8 +11,10 @@ import os
 os.environ.setdefault("TF_USE_LEGACY_KERAS", "1")
 os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
 
-import cv2
+import io
+
 import streamlit as st
+from PIL import Image
 
 from src import models, ui
 from src.detection import run_pipeline
@@ -168,16 +170,15 @@ if uploaded_file is not None:
                 "Save Your Report",
                 "Download the annotated image for your records.",
             )
-            result_bgr = cv2.cvtColor(annotated, cv2.COLOR_RGB2BGR)
-            ok, buffer = cv2.imencode(".jpg", result_bgr)
-            if ok:
-                st.download_button(
-                    label="Download annotated analysis",
-                    data=buffer.tobytes(),
-                    file_name=f"skinwise_analysis_{uploaded_file.name}",
-                    mime="image/jpeg",
-                    use_container_width=True,
-                )
+            buf = io.BytesIO()
+            Image.fromarray(annotated).save(buf, format="JPEG", quality=95)
+            st.download_button(
+                label="Download annotated analysis",
+                data=buf.getvalue(),
+                file_name=f"skinwise_analysis_{uploaded_file.name}",
+                mime="image/jpeg",
+                use_container_width=True,
+            )
 
 else:
     ui.render_empty_state()

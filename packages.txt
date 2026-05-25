@@ -1,1 +1,1 @@
-libgl1
+# No system packages needed. All image operations use PIL (no libGL / libGLib).
