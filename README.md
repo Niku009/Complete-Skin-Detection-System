@@ -156,11 +156,14 @@ weights/
 
 ## Deploy to Streamlit Cloud
 
-1. Push this repo to GitHub.
-2. Visit https://streamlit.io/cloud and click **New app**.
-3. Point it at this repo. Set the branch to `main`, the file to
-   `app.py`, and the Python version to `3.11`.
-4. Click **Deploy**.
+1. Repo is on GitHub: https://github.com/Niku009/Complete-Skin-Detection-System
+2. Sign in at https://share.streamlit.io with your GitHub account.
+3. Click **Create app** (or **New app**).
+4. Set **Repository** to `Niku009/Complete-Skin-Detection-System`, **Branch** to `main`, **Main file path** to `app.py`.
+5. Under **Advanced settings**, set **Python version** to `3.11` (must match `runtime.txt`).
+6. Click **Deploy**. No `packages.txt` is required (image work uses PIL only).
+
+If you already deployed this repo before, open the app, click **Manage app** (bottom right), then **Reboot app** so it picks up the latest `main` commit.
 
 That is enough to get a working deploy. On the first run, the auto
 download step will pull the weights from Google Drive into the container
