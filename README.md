@@ -113,7 +113,6 @@ loaded cleanly, with no Keras version drama at all.
 ├── weights/                # .pt, .pth, .h5 (auto-downloaded on first run)
 ├── assets/
 ├── .streamlit/config.toml  # Theme matched to the UI
-├── packages.txt            # APT deps for Streamlit Cloud
 ├── runtime.txt             # python-3.11
 ├── requirements.txt        # Pinned for Streamlit Cloud
 ├── requirements-dev.txt    # Alt pins for local Python 3.12 / 3.13
